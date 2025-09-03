@@ -1,4 +1,9 @@
 # .clang-format configuration for C++ project
+### Naming conventions for contributors:
+# - Variables/functions: camelCase
+# - Types (classes/structs/enums): PascalCase
+# - File names: snake_case (not enforced by clang-format)
+
 BasedOnStyle: LLVM
 
 # Indentation
