@@ -48,7 +48,6 @@ endif()
 
 set(ENGINE_SOURCES
     src/engine.cpp
-    include/engine.h
 )
 
 file(GLOB_RECURSE ENGINE_HEADERS
@@ -74,10 +73,10 @@ target_include_directories(${PROJECT_NAME}
 
 
 find_package(raylib REQUIRED)
-# Link raylib via Conan (expects raylib to be provided by Conan)
+
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
-    ${CONAN_LIBS}
+    raylib
 )
 
 # Export the platform defines as preprocessor symbols (e.g. -DPLATFORM_DESKTOP)
