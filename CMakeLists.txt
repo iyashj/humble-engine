@@ -46,9 +46,9 @@ elseif(UNIX)
     endif()
 endif()
 
-# Minimal source files for working build
 set(ENGINE_SOURCES
-        src/EngineManager.cpp
+    src/engine.cpp
+    include/engine.h
 )
 
 file(GLOB_RECURSE ENGINE_HEADERS
@@ -143,5 +143,10 @@ install(EXPORT BaseLayerTargets
         NAMESPACE BaseLayer::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/baselayer
 )
+
+
+
+# --- Tests ---
+include(cmake/tests.cmake)
 
 add_executable(humble_engine main.cpp)
