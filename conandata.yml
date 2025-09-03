@@ -3,3 +3,4 @@
 
 requirements:
   - "raylib/5.5"
+  - "catch2/3.5.2"
