@@ -4,13 +4,19 @@
 
 namespace engine {
 
-    Logger::Logger() : consoleOutput(true), fileOutput(true) { }
-
+    Logger::Logger() : consoleOutput(true), fileOutput(true) {
+        setupLogFile();
+    }
     Logger::~Logger() {
         if (logFile.is_open()) {
             logFile << "=== Log Ended ===" << std::endl;
             logFile.close();
         }
+    }
+
+    Logger& Logger::getInstance() {
+        static Logger instance;
+        return instance;
     }
 
     void Logger::debug(const std::string& message) { writeLog(LogLevel::Debug, message); }
