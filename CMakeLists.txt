@@ -24,11 +24,11 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 # Options
-option(BASELAYER_BUILD_SHARED "Build as shared library" OFF)
-option(BASELAYER_BUILD_EXAMPLES "Build example executables" OFF)
-option(BASELAYER_ENABLE_LTO "Enable Link Time Optimization" ON)
-option(BASELAYER_ENABLE_SANITIZERS "Enable sanitizers (Debug only)" OFF)
+option(HUMBLEENGINE_BUILD_SHARED "Build as shared library" OFF)
+option(HUMBLEENGINE_BUILD_EXAMPLES "Build example executables" OFF)
 option(HUMBLEENGINE_BUILD_TESTS "Build and run tests" OFF)
+option(HUMBLEENGINE_ENABLE_LTO "Enable Link Time Optimization" ON)
+option(HUMBLEENGINE_ENABLE_SANITIZERS "Enable sanitizers (Debug only)" OFF)
 
 # Platform-specific backend configuration
 if(WIN32)
@@ -59,14 +59,14 @@ file(GLOB_RECURSE ENGINE_HEADERS
     "include/*.h"
 )
 
-if(BASELAYER_BUILD_SHARED)
+if(HUMBLEENGINE_BUILD_SHARED)
     add_library(${PROJECT_NAME} SHARED ${ENGINE_SOURCES})
-    target_compile_definitions(${PROJECT_NAME} PRIVATE BASELAYER_BUILD_SHARED)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HUMBLEENGINE_BUILD_SHARED)
 else()
     add_library(${PROJECT_NAME} STATIC ${ENGINE_SOURCES})
 endif()
 
-add_library(BaseLayer::BaseLayer ALIAS ${PROJECT_NAME})
+add_library(HumbleEngine::HumbleEngine ALIAS ${PROJECT_NAME})
 
 target_include_directories(${PROJECT_NAME}
         PUBLIC
@@ -98,7 +98,7 @@ if(COMPILER_IS_GCC_LIKE)
     )
 
     # Sanitizers (Debug only)
-    if(BASELAYER_ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    if(HUMBLEENGINE_ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
         target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined)
         target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined)
     endif()
@@ -115,7 +115,7 @@ elseif(COMPILER_IS_MSVC)
 endif()
 
 # Link Time Optimization (Release only)
-if(BASELAYER_ENABLE_LTO)
+if(HUMBLEENGINE_ENABLE_LTO)
     set_target_properties(${PROJECT_NAME} PROPERTIES
             INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
             INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
@@ -123,7 +123,7 @@ if(BASELAYER_ENABLE_LTO)
 endif()
 
 # Examples
-if(BASELAYER_BUILD_EXAMPLES)
+if(HUMBLEENGINE_BUILD_EXAMPLES)
     add_subdirectory(examples)
 endif()
 
@@ -131,21 +131,41 @@ endif()
 include(GNUInstallDirs)
 
 install(TARGETS ${PROJECT_NAME}
-        EXPORT BaseLayerTargets
+        EXPORT HumbleEngineTargets
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
 install(FILES ${ENGINE_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/baselayer
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/humble_engine
 )
 
 # Package configuration
-install(EXPORT BaseLayerTargets
-        FILE BaseLayerTargets.cmake
-        NAMESPACE BaseLayer::
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/baselayer
+install(EXPORT HumbleEngineTargets
+        FILE HumbleEngineTargets.cmake
+        NAMESPACE HumbleEngine::
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/HumbleEngine
+)
+
+# Generate and install package config file
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/HumbleEngineConfig.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfig.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/HumbleEngine
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfig.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/HumbleEngine
 )
 
 
