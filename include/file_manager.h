@@ -1,12 +1,10 @@
 #ifndef BASE_LAYER_FILE_MANAGER_H
 #define BASE_LAYER_FILE_MANAGER_H
-
 #include <raylib.h>
 #include <string>
 #include <unordered_map>
 #include <expected>
-#include <memory>
-#include "i_file_manager.h"
+#include "ifilemanager.h"
 
 namespace engine {
     class FileManager : public IFileManager {

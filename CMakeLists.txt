@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
+project(HumbleEngine LANGUAGES CXX)
 
 project(HumbleEngine
         VERSION 1.0.0
@@ -49,6 +50,8 @@ endif()
 set(ENGINE_SOURCES
     src/engine.cpp
     src/file_manager.cpp
+    src/renderer.cpp
+    src/logger.cpp
 )
 
 file(GLOB_RECURSE ENGINE_HEADERS
