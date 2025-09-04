@@ -153,3 +153,4 @@ install(EXPORT BaseLayerTargets
 include(cmake/tests.cmake)
 
 add_executable(humble_engine main.cpp)
+target_link_libraries(humble_engine PRIVATE ${PROJECT_NAME})
