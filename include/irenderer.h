@@ -49,7 +49,7 @@ namespace engine {
         virtual void drawText(const std::string& text,
             const Vector2& position,
             int fontSize,
-            const Color& color);
+            const Color& color) = 0;
 
         virtual ~IDrawHandler() = default;
     };
