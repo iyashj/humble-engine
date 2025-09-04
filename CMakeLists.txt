@@ -48,6 +48,7 @@ endif()
 
 set(ENGINE_SOURCES
     src/engine.cpp
+    src/file_manager.cpp
 )
 
 file(GLOB_RECURSE ENGINE_HEADERS
