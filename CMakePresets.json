@@ -10,9 +10,10 @@
       "displayName": "Default Release",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build",
+      "toolchainFile": "${sourceDir}/build/conan_toolchain.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_PREFIX_PATH": "${sourceDir}/build_conan/build/Release/generators"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
     {
@@ -20,9 +21,23 @@
       "displayName": "Debug",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/build-debug",
+      "toolchainFile": "${sourceDir}/build-debug/conan_toolchain.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_PREFIX_PATH": "${sourceDir}/build_conan/build/Debug/generators"
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "HUMBLEENGINE_ENABLE_SANITIZERS": "ON"
+      }
+    },
+    {
+      "name": "dev",
+      "displayName": "Development Build",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-dev",
+      "toolchainFile": "${sourceDir}/build-dev/conan_toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "HUMBLEENGINE_BUILD_TESTS": "ON",
       }
     }
   ],
@@ -34,6 +49,33 @@
     {
       "name": "debug",
       "configurePreset": "debug"
+    },
+    {
+      "name": "dev",
+      "configurePreset": "dev"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "default",
+      "configurePreset": "default",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "debug",
+      "configurePreset": "debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "dev",
+      "configurePreset": "dev",
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }
