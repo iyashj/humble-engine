@@ -59,8 +59,19 @@ cmake-build-*
 .cache
 compile_commands.json
 
-# Build folder
-[Bb]uild
+# Build folders
+[Bb]uild/
+build-*/
+build_conan/
+
+# Conan files
+conaninfo.txt
+conanbuildinfo.*
+conan.lock
+
+# Test outputs
+*.log
+test_file.txt
 
 # Android
 *apk*
