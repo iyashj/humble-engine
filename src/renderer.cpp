@@ -3,7 +3,13 @@
 namespace engine {
 
 	void Renderer::initialise(int width, int height, const std::string& title) {
-		InitWindow(width, height, title.c_str());
+		windowWidth = width;
+		windowHeight = height;
+		screenCenter = Vector2{
+				static_cast<float>(windowWidth) / 2.0f,
+				static_cast<float>(windowHeight) / 2.0f};
+
+		InitWindow(windowWidth, windowHeight, title.c_str());
 		SetTargetFPS(60);
 	}
 	void Renderer::shutdown() {
@@ -25,9 +31,7 @@ namespace engine {
 			EndTextureMode();
 		}
 	}
-	bool Renderer::shouldClose() const {
-		return WindowShouldClose();
-	}
+	bool Renderer::shouldClose() const { return WindowShouldClose(); }
 
 	void Renderer::setRenderTarget(RenderTexture2D &renderTarget) {
 		renderTexture = &renderTarget;
@@ -47,12 +51,8 @@ namespace engine {
 		DrawText(text.c_str(), static_cast<int>(position.x), static_cast<int>(position.y), fontSize, color);
 	}
 
-	int Renderer::getWindowWidth() const { return GetScreenWidth(); }
-	int Renderer::getWindowHeight() const { return GetScreenHeight(); }
+	int Renderer::getWindowWidth() const { return windowWidth; }
+	int Renderer::getWindowHeight() const { return windowHeight; }
 	RenderTexture2D & Renderer::getRenderTexture() { return *renderTexture; }
-	const Vector2 Renderer::getScreenCenter() const {
-		return Vector2{
-		static_cast<float>(getWindowWidth()) / 2.0f,
-		static_cast<float>(getWindowHeight()) / 2.0f};
-	}
+	const Vector2 Renderer::getScreenCenter() const { return screenCenter; }
 }
