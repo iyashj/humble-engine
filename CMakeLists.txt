@@ -28,6 +28,7 @@ option(BASELAYER_BUILD_SHARED "Build as shared library" OFF)
 option(BASELAYER_BUILD_EXAMPLES "Build example executables" OFF)
 option(BASELAYER_ENABLE_LTO "Enable Link Time Optimization" ON)
 option(BASELAYER_ENABLE_SANITIZERS "Enable sanitizers (Debug only)" OFF)
+option(HUMBLEENGINE_BUILD_TESTS "Build and run tests" OFF)
 
 # Platform-specific backend configuration
 if(WIN32)

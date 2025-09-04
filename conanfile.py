@@ -21,3 +21,9 @@ class ConanApplication(ConanFile):
         requirements = self.conan_data.get('requirements', [])
         for requirement in requirements:
             self.requires(requirement)
+    
+    def build_requirements(self):
+        if self.options.get_safe("build_tests", False):
+            test_requirements = self.conan_data.get('test_requirements', [])
+            for requirement in test_requirements:
+                self.tool_requires(requirement)
