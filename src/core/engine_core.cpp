@@ -1,5 +1,7 @@
 #include "engine_core.h"
 
+#include "logging/logger.h"
+
 namespace engine {
     EngineCore& EngineCore::getInstance() {
         static EngineCore instance;
@@ -11,8 +13,8 @@ namespace engine {
             return true;
         }
 
-        // initialize logging
-        // log that engine has been initialized
+        Logger::initialize("HumbleEngine.log");
+        LOG_INFO_MSG("HumbleEngine initialized");
 
         isInitialized = true;
         return true;
@@ -24,7 +26,7 @@ namespace engine {
             return;
         }
 
-        // log that engine core is being shutdown
+        LOG_INFO_MSG("HumbleEngine shutdown");
 
         isInitialized = false;
     }
