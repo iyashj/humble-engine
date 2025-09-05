@@ -52,6 +52,7 @@ set(ENGINE_SOURCES
         src/rendering/renderer.cpp
         src/logging/logger.cpp
     src/core/engine_core.cpp
+        src/game/game.cpp
 )
 
 file(GLOB_RECURSE ENGINE_HEADERS

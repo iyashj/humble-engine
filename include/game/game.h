@@ -1,7 +1,7 @@
 #ifndef HUMBLEENGINE_GAME_H
 #define HUMBLEENGINE_GAME_H
 #include <expected>
-#include "humble_engine.h"
+#include "rendering/irenderer.h"
 
 namespace engine {
     class Game {
