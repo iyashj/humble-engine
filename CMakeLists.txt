@@ -86,6 +86,22 @@ target_link_libraries(${PROJECT_NAME}
     raylib
 )
 
+# Ensure headers from raylib are visible when compiling this target
+get_target_property(_raylib_iface_includes raylib INTERFACE_INCLUDE_DIRECTORIES)
+message(STATUS "raylib interface includes: ${_raylib_iface_includes}")
+if(_raylib_iface_includes)
+    target_include_directories(${PROJECT_NAME} PRIVATE ${_raylib_iface_includes})
+endif()
+
+# Additionally, consume CMakeDeps variables for config-specific include dirs (Conan)
+foreach(_cfg IN ITEMS Debug Release RelWithDebInfo MinSizeRel)
+    string(TOUPPER "${_cfg}" _CFG_UPPER)
+    if(DEFINED raylib_INCLUDE_DIRS_${_CFG_UPPER})
+    message(STATUS "raylib ${_cfg} include dirs: ${raylib_INCLUDE_DIRS_${_CFG_UPPER}}")
+        target_include_directories(${PROJECT_NAME} PRIVATE $<$<CONFIG:${_cfg}>:${raylib_INCLUDE_DIRS_${_CFG_UPPER}}>)
+    endif()
+endforeach()
+
 # Export the platform defines as preprocessor symbols (e.g. -DPLATFORM_DESKTOP)
 if(PLATFORM_DEFINES)
     target_compile_definitions(${PROJECT_NAME} PRIVATE ${PLATFORM_DEFINES})
@@ -126,7 +142,11 @@ endif()
 
 # Examples
 if(HUMBLEENGINE_BUILD_EXAMPLES)
-    add_subdirectory(examples)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt")
+        add_subdirectory(examples)
+    else()
+        message(STATUS "Examples enabled but no examples/CMakeLists.txt found; skipping examples")
+    endif()
 endif()
 
 # Installation (for package managers)
