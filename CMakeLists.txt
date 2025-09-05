@@ -49,10 +49,10 @@ elseif(UNIX)
 endif()
 
 set(ENGINE_SOURCES
-    src/engine.cpp
     src/file_manager.cpp
     src/renderer.cpp
     src/logger.cpp
+    src/core/engine_core.cpp
 )
 
 file(GLOB_RECURSE ENGINE_HEADERS
