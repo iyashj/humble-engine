@@ -1,14 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
-#include <engine.h>
+#include "engine_core.h"
 
-TEST_CASE("Engine::init initialises the engine successfully", "[engine]")
+TEST_CASE("EngineCore::init initialises the engine successfully", "[engine]")
 {
-    Engine engine;
-    REQUIRE(engine.init() == true);
-}
-
-TEST_CASE("Engine::setWindowTitle sets the windowTile", "[engine]") {
-    Engine engine;
-    engine.setWindowTitle("test-title");
-    REQUIRE(engine.getWindowTitle() == "test-title");
+    auto& engienCore = EngineCore::getInstance();
+    REQUIRE(engineCore.initialize() == true);
+    engineCore.shutdown();
 }
