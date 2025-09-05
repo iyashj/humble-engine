@@ -10,6 +10,13 @@ namespace engine {
         void shutdown();
 
     private:
+        EngineCore() = default;
+        ~EngineCore() = default;
+
+        EngineCore(const EngineCore&) = delete;
+        EngineCore& operator=(const EngineCore&) = delete;
+        EngineCore(EngineCore&&) = delete;
+        EngineCore& operator=(EngineCore&&) = delete;
         bool isInitialized = false;
     };
 }
