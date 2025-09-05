@@ -60,7 +60,7 @@ namespace engine {
     public:
         ~IRenderer() override = default;
 
-        virtual void initialise(int width, int height, const std::string& title) = 0;
+        virtual std::expected<void, std::string> initialize(int width, int height, const std::string& title) = 0;
         virtual void shutdown() = 0;
     };
 }
