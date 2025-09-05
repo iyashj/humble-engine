@@ -1,6 +1,4 @@
 cmake_minimum_required(VERSION 3.20)
-project(HumbleEngine LANGUAGES CXX)
-
 project(HumbleEngine
         VERSION 1.0.0
         DESCRIPTION "Cross-platform game engine"
@@ -76,8 +74,12 @@ target_include_directories(${PROJECT_NAME}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
-
-find_package(raylib REQUIRED)
+find_package(raylib CONFIG REQUIRED)
+# Some distributions (Conan/system) expose either 'raylib' or 'raylib::raylib'.
+# Provide an alias if only the namespaced target exists.
+if(NOT TARGET raylib AND TARGET raylib::raylib)
+    add_library(raylib ALIAS raylib::raylib)
+endif()
 
 target_link_libraries(${PROJECT_NAME}
     PUBLIC
