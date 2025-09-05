@@ -1,8 +1,6 @@
-
-#include "../../include/rendering/renderer.h"
+#include "rendering/renderer.h"
 #include <format>
 #include <variant>
-#include <stdexcept>
 
 namespace engine {
 
