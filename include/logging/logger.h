@@ -21,12 +21,12 @@ namespace engine {
 
 
 // Variadic macros for printf-style logging
-#define LOG_TRACE_MSG(fmt, ...) TraceLog(LOG_TRACE, fmt, ##__VA_ARGS__)
-#define LOG_DEBUG_MSG(fmt, ...) TraceLog(LOG_DEBUG, fmt, ##__VA_ARGS__)
-#define LOG_INFO_MSG(fmt, ...)  TraceLog(LOG_INFO,  fmt, ##__VA_ARGS__)
-#define LOG_WARN_MSG(fmt, ...)  TraceLog(LOG_WARNING, fmt, ##__VA_ARGS__)
-#define LOG_ERROR_MSG(fmt, ...) TraceLog(LOG_ERROR, fmt, ##__VA_ARGS__)
-#define LOG_FATAL_MSG(fmt, ...) TraceLog(LOG_FATAL, fmt, ##__VA_ARGS__)
+#define LOG_TRACE_MSG(...) TraceLog(LOG_TRACE, __VA_ARGS__)
+#define LOG_DEBUG_MSG(...) TraceLog(LOG_DEBUG, __VA_ARGS__)
+#define LOG_INFO_MSG(...)  TraceLog(LOG_INFO,  __VA_ARGS__)
+#define LOG_WARN_MSG(...)  TraceLog(LOG_WARNING, __VA_ARGS__)
+#define LOG_ERROR_MSG(...) TraceLog(LOG_ERROR, __VA_ARGS__)
+#define LOG_FATAL_MSG(...) TraceLog(LOG_FATAL, __VA_ARGS__)
 
 }
 
