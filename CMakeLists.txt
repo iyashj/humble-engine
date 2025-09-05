@@ -49,9 +49,7 @@ elseif(UNIX)
 endif()
 
 set(ENGINE_SOURCES
-    src/file_manager.cpp
-    src/renderer.cpp
-    src/logger.cpp
+        src/logging/logger.cpp
     src/core/engine_core.cpp
 )
 

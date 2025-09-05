@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include "engine_core.h"
+#include "include/core/engine_core.h"
 
 TEST_CASE("EngineCore::init initialises the engine successfully", "[engine]")
 {
