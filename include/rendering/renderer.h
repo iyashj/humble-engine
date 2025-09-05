@@ -6,7 +6,7 @@
 #include <string>
 #include "raylib.h"
 #include <vector>
-#include "../rendering/irenderer.h"
+#include "rendering/irenderer.h"
 
 namespace engine {
 
