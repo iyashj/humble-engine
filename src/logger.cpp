@@ -1,89 +1,89 @@
-#include "logger.h"
+#include "logging/logger.h"
+#include <fstream>
 #include <iostream>
+#include <mutex>
 #include <chrono>
+#include <iomanip>
+#include <sstream>
+#include <filesystem>
+#include <format>
 
 namespace engine {
 
-    Logger::Logger() : consoleOutput(true), fileOutput(true) {
-        setupLogFile();
+    void Logger::initialize(const std::string &logFile, int level) {
+        // Print current working directory for debugging
+        std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
+
+        std::string logFileName = logFile;
+        if (!logFile.empty()) {
+            // Add date-time tag to filename before extension
+            auto now = std::chrono::system_clock::now();
+            auto now_time_t = std::chrono::system_clock::to_time_t(now);
+            std::tm tm_buf;
+#if defined(_WIN32)
+            localtime_s(&tm_buf, &now_time_t);
+#else
+            localtime_r(&now_time_t, &tm_buf);
+#endif
+            std::ostringstream oss;
+            oss << std::put_time(&tm_buf, "%Y%m%d_%H%M%S");
+            // Insert timestamp before file extension
+            size_t dot = logFile.find_last_of('.');
+            if (dot != std::string::npos) {
+                logFileName = logFile.substr(0, dot) + "_" + oss.str() + logFile.substr(dot);
+            } else {
+                logFileName = logFile + "_" + oss.str();
+            }
+            logFileStream.open(logFileName, std::ios::app);
+        }
+        SetTraceLogCallback(logCallback);
+        SetTraceLogLevel(level);
     }
-    Logger::~Logger() {
-        if (logFile.is_open()) {
-            logFile << "=== Log Ended ===" << std::endl;
-            logFile.close();
+    void Logger::shutdown() {
+        if (logFileStream.is_open()) {
+            logFileStream.close();
         }
     }
 
-    Logger& Logger::getInstance() {
-        static Logger instance;
-        return instance;
+    std::ofstream Logger::logFileStream;
+    std::mutex Logger::logMutex;
+
+    void Logger::logCallback(int logLevel, const char *text, const va_list args) {
+        char buffer[1024];
+        vsnprintf(buffer, sizeof(buffer), text, args);
+        std::string safeMsg(buffer, strnlen(buffer, sizeof(buffer)));
+
+        // Get timestamp
+        auto now = std::chrono::system_clock::now();
+        auto now_time_t = std::chrono::system_clock::to_time_t(now);
+        std::tm tm_buf;
+#if defined(_WIN32)
+        localtime_s(&tm_buf, &now_time_t);
+#else
+        localtime_r(&now_time_t, &tm_buf);
+#endif
+        std::ostringstream timestamp;
+        timestamp << std::put_time(&tm_buf, "%Y-%m-%d %H:%M:%S");
+
+        const std::string formatted = std::format("[{}] [{}] {}", timestamp.str(), getLevelString(logLevel), safeMsg);
+        // Thread-safe output
+        std::lock_guard<std::mutex> lock(logMutex);
+        std::cout << formatted << '\n';
+        if (logFileStream.is_open()) {
+            logFileStream << formatted << '\n';
+            logFileStream.flush();
+        }
     }
 
-    void Logger::debug(const std::string& message) { writeLog(LogLevel::Debug, message); }
-    void Logger::info(const std::string& message) { writeLog(LogLevel::Info, message); }
-    void Logger::warning(const std::string& message) { writeLog(LogLevel::Warning, message); }
-    void Logger::error(const std::string& message) { writeLog(LogLevel::Error, message); }
-    void Logger::critical(const std::string& message) { writeLog(LogLevel::Critical, message); }
-
-    std::string Logger::getCurrentTimestamp() {
-        const auto now = std::chrono::system_clock::now();
-        const auto time_t = std::chrono::system_clock::to_time_t(now);
-        const auto tm = *std::localtime(&time_t);
-        std::ostringstream oss;
-        oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
-        return oss.str();
-    }
-
-    std::string Logger::levelToString(const LogLevel level) {
+    const char * Logger::getLevelString(int level) {
         switch (level) {
-            case LogLevel::Debug: return "DEBUG";
-            case LogLevel::Info: return "INFO";
-            case LogLevel::Warning: return "WARNING";
-            case LogLevel::Error: return "ERROR";
-            case LogLevel::Critical: return "CRITICAL";
-        }
-        return "Unknown";
-    }
-
-    void Logger::setupLogFile() {
-        std::filesystem::create_directories("logs");
-        const auto now = std::chrono::system_clock::now();
-        const auto time_t = std::chrono::system_clock::to_time_t(now);
-        const auto tm = *std::localtime(&time_t);
-        std::ostringstream oss;
-        oss << "logs/baselayer_" << std::put_time(&tm, "%Y%m%d_%H%M%S") << ".log";
-        logFilename = oss.str();
-        if (fileOutput) {
-            logFile.open(logFilename, std::ios::app);
-            if (logFile.is_open()) {
-                logFile << "=== BaseLayer Engine Log Started ===" << std::endl;
-            }
+            case LOG_TRACE: return "TRACE";
+            case LOG_DEBUG: return "DEBUG";
+            case LOG_INFO: return "INFO";
+            case LOG_WARNING: return "WARNING";
+            case LOG_ERROR: return "ERROR";
+            case LOG_FATAL: return "FATAL";
+            default: return "UNKNOWN";
         }
     }
-
-    void Logger::setLogFile(const std::string &filename) {
-        if (logFile.is_open()) logFile.close();
-        logFilename = filename;
-        if (fileOutput) logFile.open(logFilename, std::ios::app);
-    }
-
-    void Logger::writeLog(const LogLevel level, const std::string& message) {
-        const std::string timestamp = getCurrentTimestamp();
-        const std::string level_str = levelToString(level);
-        const std::string log_line = "[" + timestamp + "] [" + level_str + "] " + message;
-        if (consoleOutput) {
-            if (level >= LogLevel::Error) std::cerr << log_line << std::endl;
-            else std::cout << log_line << std::endl;
-        }
-        if (fileOutput) {
-            if (!logFile.is_open() && !logFilename.empty()) {
-                logFile.open(logFilename, std::ios::app);
-            }
-            if (logFile.is_open()) {
-                logFile << log_line << std::endl;
-                logFile.flush();
-            }
-        }
-    }
-
 }
