@@ -10,8 +10,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 ## Set a reasonable default build type when not specified by the user
-if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type" FORCE)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
 endif()
 
 # Cross-platform compiler detection
@@ -53,9 +53,7 @@ set(ENGINE_SOURCES
         src/game/game.cpp
 )
 
-file(GLOB_RECURSE ENGINE_HEADERS
-    "include/*.h"
-)
+file(GLOB_RECURSE ENGINE_HEADERS CONFIGURE_DEPENDS "include/*.h")
 
 if(HUMBLEENGINE_BUILD_SHARED)
     add_library(${PROJECT_NAME} SHARED ${ENGINE_SOURCES})
@@ -80,27 +78,7 @@ find_package(raylib CONFIG REQUIRED)
 if(NOT TARGET raylib AND TARGET raylib::raylib)
     add_library(raylib ALIAS raylib::raylib)
 endif()
-
-target_link_libraries(${PROJECT_NAME}
-    PUBLIC
-    raylib
-)
-
-# Ensure headers from raylib are visible when compiling this target
-get_target_property(_raylib_iface_includes raylib INTERFACE_INCLUDE_DIRECTORIES)
-message(STATUS "raylib interface includes: ${_raylib_iface_includes}")
-if(_raylib_iface_includes)
-    target_include_directories(${PROJECT_NAME} PRIVATE ${_raylib_iface_includes})
-endif()
-
-# Additionally, consume CMakeDeps variables for config-specific include dirs (Conan)
-foreach(_cfg IN ITEMS Debug Release RelWithDebInfo MinSizeRel)
-    string(TOUPPER "${_cfg}" _CFG_UPPER)
-    if(DEFINED raylib_INCLUDE_DIRS_${_CFG_UPPER})
-    message(STATUS "raylib ${_cfg} include dirs: ${raylib_INCLUDE_DIRS_${_CFG_UPPER}}")
-        target_include_directories(${PROJECT_NAME} PRIVATE $<$<CONFIG:${_cfg}>:${raylib_INCLUDE_DIRS_${_CFG_UPPER}}>)
-    endif()
-endforeach()
+target_link_libraries(${PROJECT_NAME} PUBLIC raylib)
 
 # Export the platform defines as preprocessor symbols (e.g. -DPLATFORM_DESKTOP)
 if(PLATFORM_DEFINES)
@@ -141,12 +119,8 @@ if(HUMBLEENGINE_ENABLE_LTO)
 endif()
 
 # Examples
-if(HUMBLEENGINE_BUILD_EXAMPLES)
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt")
-        add_subdirectory(examples)
-    else()
-        message(STATUS "Examples enabled but no examples/CMakeLists.txt found; skipping examples")
-    endif()
+if(HUMBLEENGINE_BUILD_EXAMPLES AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt")
+    add_subdirectory(examples)
 endif()
 
 # Installation (for package managers)
@@ -195,5 +169,7 @@ install(FILES
 # --- Tests ---
 include(cmake/tests.cmake)
 
-add_executable(humble_engine main.cpp)
-target_link_libraries(humble_engine PRIVATE ${PROJECT_NAME})
+if(PROJECT_IS_TOP_LEVEL)
+    add_executable(humble_engine main.cpp)
+    target_link_libraries(humble_engine PRIVATE ${PROJECT_NAME})
+endif()

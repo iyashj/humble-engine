@@ -2,15 +2,23 @@
 # To keep your changes, remove these comment lines, but the plugin won't be able to modify your requirements
 
 from conan import ConanFile
-from conan.tools.cmake import cmake_layout, CMakeToolchain
+from conan.tools.cmake import CMakeToolchain, cmake_layout
 
 class ConanApplication(ConanFile):
+    name = "humble_engine"
     package_type = "application"
     settings = "os", "compiler", "build_type", "arch"
+    options = {"build_tests": [True, False]}
+    default_options = {"build_tests": False}
     generators = "CMakeDeps"
 
     def layout(self):
-        cmake_layout(self)
+        # Flat layout: generators, build, and source all in build/Debug (or build/Release)
+        from pathlib import Path
+        build_folder = f"build/{self.settings.build_type}"
+        self.folders.build = build_folder
+        self.folders.generators = build_folder
+        self.folders.source = "."
 
     def generate(self):
         tc = CMakeToolchain(self)
@@ -23,7 +31,6 @@ class ConanApplication(ConanFile):
             self.requires(requirement)
     
     def build_requirements(self):
-        if self.options.get_safe("build_tests", False):
-            test_requirements = self.conan_data.get('test_requirements', [])
-            for requirement in test_requirements:
-                self.tool_requires(requirement)
+        if self.options.build_tests:
+            for requirement in self.conan_data.get('test_requirements', []):
+                self.requires(requirement)

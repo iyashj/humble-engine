@@ -9,8 +9,8 @@
       "name": "release",
       "displayName": "Release",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build-release",
-  "toolchainFile": "${sourceDir}/build-release/build/Release/generators/conan_toolchain.cmake",
+      "binaryDir": "${sourceDir}/build/Release",
+      "toolchainFile": "${sourceDir}/build/Release/build/Release/conan_toolchain.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
@@ -20,8 +20,8 @@
       "name": "debug",
       "displayName": "Debug",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build-debug",
-  "toolchainFile": "${sourceDir}/build-debug/build/Debug/generators/conan_toolchain.cmake",
+      "binaryDir": "${sourceDir}/build/Debug",
+      "toolchainFile": "${sourceDir}/build/Debug/build/Debug/conan_toolchain.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
@@ -29,13 +29,25 @@
       }
     },
     {
-      "name": "dev-tests",
-      "displayName": "Dev With Tests",
+      "name": "debug-with-tests",
+      "displayName": "Debug With Tests",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build-dev",
-  "toolchainFile": "${sourceDir}/build-dev/build/Debug/generators/conan_toolchain.cmake",
+      "binaryDir": "${sourceDir}/build/Debug",
+      "toolchainFile": "${sourceDir}/build/Debug/build/Debug/conan_toolchain.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "HUMBLEENGINE_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "release-with-tests",
+      "displayName": "Release With Tests",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/Release",
+      "toolchainFile": "${sourceDir}/build/Release/build/Release/conan_toolchain.cmake",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "HUMBLEENGINE_BUILD_TESTS": "ON"
       }
@@ -49,10 +61,6 @@
     {
       "name": "debug",
       "configurePreset": "debug"
-    },
-    {
-      "name": "dev-tests",
-      "configurePreset": "dev-tests"
     }
   ],
   "testPresets": [
@@ -67,11 +75,6 @@
       "output": {
         "outputOnFailure": true
       }
-    },
-    {
-      "name": "dev-tests",
-      "configurePreset": "dev-tests",
-      "output": { "outputOnFailure": true }
     }
   ]
 }
