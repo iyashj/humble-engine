@@ -47,6 +47,9 @@ class HumbleEngineConan(ConanFile):
         tc.variables["HUMBLEENGINE_BUILD_SHARED"] = self.options.shared
         tc.variables["HUMBLEENGINE_BUILD_TESTS"] = self.options.build_tests
         tc.variables["HUMBLEENGINE_BUILD_EXAMPLES"] = self.options.build_examples
+        # Enforce C++23 across toolchains
+        tc.variables["CMAKE_CXX_STANDARD"] = 23
+        tc.variables["CMAKE_CXX_EXTENSIONS"] = False
         # Don't generate user presets to avoid conflicts
         tc.user_presets_path = False
         tc.generate()
