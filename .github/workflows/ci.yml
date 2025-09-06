@@ -41,6 +41,13 @@ jobs:
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 
+      - name: Set environment for GCC-13 (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          echo "CC=gcc-13" >> $GITHUB_ENV
+          echo "CXX=g++-13" >> $GITHUB_ENV
+          echo "LD_LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/13" >> $GITHUB_ENV
+
       - name: Install Ninja (macOS)
         if: runner.os == 'macOS'
         run: brew install ninja
@@ -98,9 +105,9 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.build_type }}" == "Debug" ]]; then
-            cmake --preset debug -DCMAKE_CXX_STANDARD=23
+            cmake --preset debug -DCMAKE_CXX_STANDARD=23 -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=g++-13
           else
-            cmake --preset default -DCMAKE_CXX_STANDARD=23
+            cmake --preset default -DCMAKE_CXX_STANDARD=23 -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=g++-13
           fi
 
       - name: Configure CMake (preset) [Windows]
