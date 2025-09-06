@@ -1,0 +1,65 @@
+name: Build and Test
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        build_type: [Debug, Release]
+        include:
+          - os: ubuntu-latest
+            conan_profile: default
+          - os: windows-latest
+            conan_profile: default
+          - os: macos-latest
+            conan_profile: default
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: Checkout repoistory
+    - uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install Conan package manager
+      run: |
+        python -m pip install --upgrade pip
+        pip install conan>=2.0
+
+    - name: Configure Conan profile
+      run: |
+        conan profile detect --force
+
+    - name: Install project dependencies with Conan
+      run: |
+        conan install . --build=missing -s build_type=${{ matrix.build_type }} -o build_tests=True
+
+    - name: Configure CMake project using preset
+      run: |
+        cmake --preset conan-${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}
+
+    - name: Build project using preset
+      run: |
+        cmake --build --preset conan-${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}
+
+    - name: Run tests with CTest
+      run: |
+        cd build/${{ matrix.build_type }}
+        ctest --output-on-failure --verbose
+
+    - name: Upload test results as artifact
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.os }}-${{ matrix.build_type }}
+        path: build/${{ matrix.build_type }}/test-results/
