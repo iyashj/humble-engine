@@ -48,7 +48,7 @@ namespace engine {
     std::ofstream Logger::logFileStream;
     std::mutex Logger::logMutex;
 
-    void Logger::logCallback(int logLevel, const char *text, const va_list args) {
+    void Logger::logCallback(int logLevel, const char *text, va_list args) {
         char buffer[1024];
         vsnprintf(buffer, sizeof(buffer), text, args);
         std::string safeMsg(buffer, strnlen(buffer, sizeof(buffer)));

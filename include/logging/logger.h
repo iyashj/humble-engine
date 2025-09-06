@@ -15,7 +15,7 @@ namespace engine {
     private:
         static std::ofstream logFileStream;
         static std::mutex logMutex;
-        static void logCallback(int logLevel, const char *text, const va_list args);
+        static void logCallback(int logLevel, const char *text, va_list args);
         static const char* getLevelString(int level);
     };
 
