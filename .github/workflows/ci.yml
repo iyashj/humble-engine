@@ -23,8 +23,8 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - name: Checkout repoistory
-    - uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -46,11 +46,11 @@ jobs:
 
     - name: Configure CMake project using preset
       run: |
-        cmake --preset conan-${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}
+        cmake --preset ${{ matrix.build_type == 'Debug' && 'debug' || 'default' }}
 
     - name: Build project using preset
       run: |
-        cmake --build --preset conan-${{ matrix.build_type == 'Debug' && 'debug' || 'release' }}
+        cmake --build --preset ${{ matrix.build_type == 'Debug' && 'debug' || 'default' }}
 
     - name: Run tests with CTest
       run: |
