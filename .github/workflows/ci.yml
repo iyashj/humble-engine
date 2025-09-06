@@ -32,7 +32,17 @@ jobs:
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y ninja-build libgl1-mesa-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libasound2-dev
+          sudo apt-get install -y \
+            ninja-build \
+            xorg-dev \
+            libgl1-mesa-dev \
+            libglu1-mesa-dev \
+            libx11-dev \
+            libxrandr-dev \
+            libxinerama-dev \
+            libxcursor-dev \
+            libxi-dev \
+            libasound2-dev
 
       - name: Install Ninja (macOS)
         if: runner.os == 'macOS'
@@ -40,7 +50,7 @@ jobs:
 
       - name: Install Ninja (Windows)
         if: runner.os == 'Windows'
-        run: choco install ninja
+        run: choco install ninja -y
 
       - name: Set up MSVC environment (Windows)
         if: runner.os == 'Windows'
@@ -68,7 +78,16 @@ jobs:
       - name: Detect Conan profile
         run: conan profile detect --force
 
-      - name: Conan install (deps)
+      - name: Conan install (deps) [Windows]
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: >
+          conan install . --build=missing -s build_type=${{ matrix.build_type }} -o '&:build_tests=True'
+          -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
+
+      - name: Conan install (deps) [Linux/macOS]
+        if: runner.os != 'Windows'
+        shell: bash
         run: |
           conan install . \
             --build=missing \
@@ -77,7 +96,8 @@ jobs:
             -c tools.system.package_manager:mode=install \
             -c tools.system.package_manager:sudo=True
 
-      - name: Configure CMake (preset)
+      - name: Configure CMake (preset) [Linux/macOS]
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           if [[ "${{ matrix.build_type }}" == "Debug" ]]; then
@@ -86,7 +106,18 @@ jobs:
             cmake --preset default
           fi
 
-      - name: Build
+      - name: Configure CMake (preset) [Windows]
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if ("${{ matrix.build_type }}" -eq "Debug") {
+            cmake --preset debug
+          } else {
+            cmake --preset default
+          }
+
+      - name: Build [Linux/macOS]
+        if: runner.os != 'Windows'
         shell: bash
         run: |
           if [[ "${{ matrix.build_type }}" == "Debug" ]]; then
@@ -95,7 +126,25 @@ jobs:
             cmake --build --preset default --parallel
           fi
 
-      - name: Run tests
+      - name: Build [Windows]
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if ("${{ matrix.build_type }}" -eq "Debug") {
+            cmake --build --preset debug --parallel
+          } else {
+            cmake --build --preset default --parallel
+          }
+
+      - name: Run tests [Linux/macOS]
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          ctest --test-dir build/${{ matrix.build_type }} --output-on-failure --parallel
+
+      - name: Run tests [Windows]
+        if: runner.os == 'Windows'
+        shell: pwsh
         run: |
           ctest --test-dir build/${{ matrix.build_type }} --output-on-failure --parallel
 
