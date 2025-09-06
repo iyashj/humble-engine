@@ -70,7 +70,7 @@ jobs:
 
       - name: Conan install (deps)
         run: |
-          conan install . --build=missing -s build_type=${{ matrix.build_type }} -o &:build_tests=True
+          conan install . --build=missing -s build_type=${{ matrix.build_type }} -o "&:build_tests=True"
 
       - name: Configure CMake (preset)
         shell: bash
