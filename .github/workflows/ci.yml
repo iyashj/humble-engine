@@ -134,7 +134,7 @@ jobs:
       - name: Configure Conan profile
         run: |
           conan profile detect --force
-          conan profile show default
+          conan profile show -pr default
 
       - name: Create custom Conan profile (Linux GCC)
         if: runner.os == 'Linux' && contains(matrix.compiler, 'gcc')
