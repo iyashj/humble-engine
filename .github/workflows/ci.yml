@@ -28,6 +28,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Free disk space (Linux)
+        if: runner.os == 'Linux'
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
+
       - name: Install GCC-13 and Ninja (Linux)
         if: runner.os == 'Linux'
         run: |
@@ -37,7 +49,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc-13 g++-13 ninja-build \
             xorg-dev libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxrandr-dev \
-            libxinerama-dev libxcursor-dev libxi-dev libasound2-dev
+            libxinerama-dev libxcursor-dev libxi-dev libasound2-dev pkg-config
           sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
           sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 
@@ -46,7 +58,6 @@ jobs:
         run: |
           echo "CC=gcc-13" >> $GITHUB_ENV
           echo "CXX=g++-13" >> $GITHUB_ENV
-          echo "LD_LIBRARY_PATH=/usr/lib/gcc/x86_64-linux-gnu/13" >> $GITHUB_ENV
 
       - name: Install Ninja (macOS)
         if: runner.os == 'macOS'
@@ -82,42 +93,39 @@ jobs:
       - name: Detect Conan profile
         run: conan profile detect --force
 
-      - name: Conan install (deps) [Windows]
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: >
-          conan install . --build=missing -s build_type=${{ matrix.build_type }} -o '&:build_tests=True'
-          -c tools.system.package_manager:mode=install -c tools.system.package_manager:sudo=True
+      - name: Show Conan profile (Debug)
+        run: conan profile show -pr default
 
-      - name: Conan install (deps) [Linux/macOS]
-        if: runner.os != 'Windows'
+      - name: Conan install (deps)
         shell: bash
         run: |
           conan install . \
             --build=missing \
-            -s build_type=${{ matrix.build_type }} \
-            -o "&:build_tests=True" \
-            -c tools.system.package_manager:mode=install \
-            -c tools.system.package_manager:sudo=True
+            --settings:host=build_type=${{ matrix.build_type }} \
+            --settings:host=compiler.cppstd=23 \
+            --options="&:build_tests=True" \
+            --conf="tools.cmake.cmaketoolchain:generator=Ninja" \
+            --conf="tools.system.package_manager:mode=install" \
+            --conf="tools.system.package_manager:sudo=True"
 
-      - name: Configure CMake (preset) [Linux/macOS]
+      - name: Configure CMake (Linux/macOS)
         if: runner.os != 'Windows'
         shell: bash
         run: |
           if [[ "${{ matrix.build_type }}" == "Debug" ]]; then
-            cmake --preset debug -DCMAKE_CXX_STANDARD=23 -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=g++-13
+            cmake --preset debug
           else
-            cmake --preset default -DCMAKE_CXX_STANDARD=23 -DCMAKE_C_COMPILER=gcc-13 -DCMAKE_CXX_COMPILER=g++-13
+            cmake --preset default
           fi
 
-      - name: Configure CMake (preset) [Windows]
+      - name: Configure CMake (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           if ("${{ matrix.build_type }}" -eq "Debug") {
-            cmake --preset debug -DCMAKE_CXX_STANDARD=23
+            cmake --preset debug
           } else {
-            cmake --preset default -DCMAKE_CXX_STANDARD=23
+            cmake --preset default
           }
 
       - name: Build [Linux/macOS]
