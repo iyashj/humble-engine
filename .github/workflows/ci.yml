@@ -5,61 +5,159 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build-test:
+  build:
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-22.04, macos-14, windows-2022]
         build_type: [Debug, Release]
-        include:
-          - os: ubuntu-latest
-            conan_profile: default
-          - os: windows-latest
-            conan_profile: default
-          - os: macos-latest
-            conan_profile: default
 
     runs-on: ${{ matrix.os }}
+    name: "${{ matrix.os }} - ${{ matrix.build_type }}"
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+      - name: Free disk space (Linux)
+        if: runner.os == 'Linux'
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: false
 
-    - name: Install Conan package manager
-      run: |
-        python -m pip install --upgrade pip
-        pip install conan>=2.0
+      - name: Install GCC-13 and dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get update
+          sudo apt-get install -y gcc-13 g++-13 ninja-build \
+            xorg-dev libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxrandr-dev \
+            libxinerama-dev libxcursor-dev libxi-dev libasound2-dev pkg-config
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
+          echo "CC=gcc-13" >> $GITHUB_ENV
+          echo "CXX=g++-13" >> $GITHUB_ENV
 
-    - name: Configure Conan profile
-      run: |
-        conan profile detect --force
+      - name: Install Ninja (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja
 
-    - name: Install project dependencies with Conan
-      run: |
-        conan install . --build=missing -s build_type=${{ matrix.build_type }} -o build_tests=True
+      - name: Install Ninja (Windows)
+        if: runner.os == 'Windows'
+        run: choco install ninja -y
 
-    - name: Configure CMake project using preset
-      run: |
-        cmake --preset ${{ matrix.build_type == 'Debug' && 'debug' || 'default' }}
+      - name: Set up MSVC environment (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
 
-    - name: Build project using preset
-      run: |
-        cmake --build --preset ${{ matrix.build_type == 'Debug' && 'debug' || 'default' }}
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-    - name: Run tests with CTest
-      run: |
-        cd build/${{ matrix.build_type }}
-        ctest --output-on-failure --verbose
+      - name: Cache Conan packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-${{ matrix.build_type }}-${{ hashFiles('conanfile.py', 'conandata.yml') }}
+          restore-keys: |
+            conan-${{ runner.os }}-${{ matrix.build_type }}-
+            conan-${{ runner.os }}-
 
-    - name: Upload test results as artifact
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: test-results-${{ matrix.os }}-${{ matrix.build_type }}
-        path: build/${{ matrix.build_type }}/test-results/
+      - name: Install Conan
+        run: |
+          python -m pip install --upgrade pip
+          pip install "conan>=2.0,<3.0"
+
+      - name: Detect Conan profile
+        run: conan profile detect --force
+
+      - name: Show Conan profile
+        run: conan profile show default
+
+      - name: Install dependencies via Conan
+        shell: bash
+        run: |
+          conan install . \
+            --build=missing \
+            -s:h build_type=${{ matrix.build_type }} \
+            -s:h compiler.cppstd=23 \
+            -o build_tests=True \
+            --conf="tools.cmake.cmaketoolchain:generator=Ninja" \
+            --conf="tools.system.package_manager:mode=install" \
+            --conf="tools.system.package_manager:sudo=True"
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          PRESET=${{ matrix.build_type == 'Debug' && 'debug' || 'default' }}
+          cmake --preset $PRESET -D HUMBLEENGINE_ENABLE_SANITIZERS=OFF
+        if: runner.os != 'Windows'
+
+      - name: Configure CMake (Windows)
+        shell: pwsh
+        run: |
+          $preset = if ("${{ matrix.build_type }}" -eq "Debug") { "debug" } else { "default" }
+          cmake --preset $preset -D HUMBLEENGINE_ENABLE_SANITIZERS=OFF
+        if: runner.os == 'Windows'
+
+      - name: Build project
+        shell: bash
+        run: |
+          PRESET=${{ matrix.build_type == 'Debug' && 'debug' || 'default' }}
+          cmake --build --preset $PRESET --parallel
+        if: runner.os != 'Windows'
+
+      - name: Build project (Windows)
+        shell: pwsh
+        run: |
+          $preset = if ("${{ matrix.build_type }}" -eq "Debug") { "debug" } else { "default" }
+          cmake --build --preset $preset --parallel
+        if: runner.os == 'Windows'
+
+      - name: Run tests
+        shell: bash
+        run: ctest --test-dir build/${{ matrix.build_type }} --output-on-failure --parallel
+        if: runner.os != 'Windows'
+
+      - name: Run tests (Windows)
+        shell: pwsh
+        run: |
+          ctest --test-dir build/${{ matrix.build_type }} --output-on-failure --parallel
+        if: runner.os == 'Windows'
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.os }}-${{ matrix.build_type }}
+          path: |
+            build/${{ matrix.build_type }}/Testing/
+            build/${{ matrix.build_type }}/**/test-results/
+          retention-days: 14
+
+      - name: Upload logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: logs-${{ matrix.os }}-${{ matrix.build_type }}
+          path: |
+            build/${{ matrix.build_type }}/CMakeFiles/*.log
+            build/${{ matrix.build_type }}/**/*.log
+            ~/.conan2/logs/
+          retention-days: 14
