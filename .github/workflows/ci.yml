@@ -28,21 +28,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Ninja (Linux)
+      - name: Install GCC-13 and Ninja (Linux)
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y \
-            ninja-build \
-            xorg-dev \
-            libgl1-mesa-dev \
-            libglu1-mesa-dev \
-            libx11-dev \
-            libxrandr-dev \
-            libxinerama-dev \
-            libxcursor-dev \
-            libxi-dev \
-            libasound2-dev
+          sudo apt-get install -y software-properties-common
+          sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+          sudo apt-get update
+          sudo apt-get install -y gcc-13 g++-13 ninja-build \
+            xorg-dev libgl1-mesa-dev libglu1-mesa-dev libx11-dev libxrandr-dev \
+            libxinerama-dev libxcursor-dev libxi-dev libasound2-dev
+          sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-13 100
+          sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-13 100
 
       - name: Install Ninja (macOS)
         if: runner.os == 'macOS'
@@ -101,9 +98,9 @@ jobs:
         shell: bash
         run: |
           if [[ "${{ matrix.build_type }}" == "Debug" ]]; then
-            cmake --preset debug
+            cmake --preset debug -DCMAKE_CXX_STANDARD=23
           else
-            cmake --preset default
+            cmake --preset default -DCMAKE_CXX_STANDARD=23
           fi
 
       - name: Configure CMake (preset) [Windows]
@@ -111,9 +108,9 @@ jobs:
         shell: pwsh
         run: |
           if ("${{ matrix.build_type }}" -eq "Debug") {
-            cmake --preset debug
+            cmake --preset debug -DCMAKE_CXX_STANDARD=23
           } else {
-            cmake --preset default
+            cmake --preset default -DCMAKE_CXX_STANDARD=23
           }
 
       - name: Build [Linux/macOS]
