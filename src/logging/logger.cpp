@@ -7,6 +7,7 @@
 #include <sstream>
 #include <filesystem>
 #include <format>
+#include <fmt/core.h>
 
 namespace engine {
 
@@ -65,7 +66,7 @@ namespace engine {
         std::ostringstream timestamp;
         timestamp << std::put_time(&tm_buf, "%Y-%m-%d %H:%M:%S");
 
-        const std::string formatted = std::format("[{}] [{}] {}", timestamp.str(), getLevelString(logLevel), safeMsg);
+    const std::string formatted = fmt::format("[{}] [{}] {}", timestamp.str(), getLevelString(logLevel), safeMsg);
         // Thread-safe output
         std::lock_guard<std::mutex> lock(logMutex);
         std::cout << formatted << '\n';

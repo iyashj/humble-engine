@@ -1,5 +1,5 @@
 #include "rendering/renderer.h"
-#include <format>
+#include <fmt/core.h>
 #include <variant>
 
 namespace engine {
@@ -15,7 +15,7 @@ namespace engine {
 		try {
 			renderTexture = std::make_unique<RenderTexture2D>(LoadRenderTexture(windowWidth, windowHeight));
 		} catch (const std::exception& e) {
-			return std::unexpected(std::format("Failed to create render texture: {}", e.what()));
+			return std::unexpected(fmt::format("Failed to create render texture: {}", e.what()));
 		}
 		return {};
 	}

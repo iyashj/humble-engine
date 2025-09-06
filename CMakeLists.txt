@@ -55,7 +55,8 @@ target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 
 # --- Dependencies ---
 find_package(raylib REQUIRED)
-target_link_libraries(${PROJECT_NAME} PUBLIC raylib)
+find_package(fmt REQUIRED)
+target_link_libraries(${PROJECT_NAME} PUBLIC raylib fmt::fmt)
 
 # --- Compiler warnings (local only, not exported) ---
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")

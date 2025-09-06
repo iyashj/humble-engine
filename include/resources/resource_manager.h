@@ -61,7 +61,7 @@ namespace engine::resources {
         static std::expected<handle_type, std::string> load(const std::string &path) {
             Texture2D texture = LoadTexture(path.c_str());
             if (texture.id == 0) {
-                return std::unexpected(std::format("Failed to load texture: {}", path));
+                return std::unexpected(fmt::format("Failed to load texture: {}", path));
             }
             return texture;
         }
@@ -77,7 +77,7 @@ namespace engine::resources {
         static std::expected<handle_type, std::string> load(const std::string &path) {
             Sound sound = LoadSound(path.c_str());
             if (sound.stream.buffer == nullptr) {
-                return std::unexpected(std::format("Failed to load sound: {}", path));
+                return std::unexpected(fmt::format("Failed to load sound: {}", path));
             }
 
             return sound;

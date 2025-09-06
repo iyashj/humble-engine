@@ -24,6 +24,7 @@ class HumbleEngineConan(ConanFile):
 
     def requirements(self):
         self.requires("raylib/5.5")
+        self.requires("fmt/10.2.1")
 
     def build_requirements(self):
         if self.options.build_tests:
