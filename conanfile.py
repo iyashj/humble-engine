@@ -10,24 +10,14 @@ class HumbleEngineConan(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
     options = {
         "shared": [True, False],
-        "fPIC": [True, False],
         "build_tests": [True, False],
         "build_examples": [True, False]
     }
     default_options = {
         "shared": False,
-        "fPIC": True,
         "build_tests": False,
         "build_examples": False
     }
-
-    def config_options(self):
-        if self.settings.os == "Windows":
-            self.options.rm_safe("fPIC")
-
-    def configure(self):
-        if self.options.shared:
-            self.options.rm_safe("fPIC")
 
     def layout(self):
         cmake_layout(self)
