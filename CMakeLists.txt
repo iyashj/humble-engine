@@ -1,60 +1,34 @@
 cmake_minimum_required(VERSION 3.20)
+
+# --- Project metadata ---
 project(HumbleEngine
         VERSION 1.0.0
         DESCRIPTION "Cross-platform game engine"
+        HOMEPAGE_URL "https://github.com/iyashj/humble-engine"
         LANGUAGES CXX
 )
 
-set(CMAKE_CXX_STANDARD 23)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+include(CMakeDependentOption)
+include(GNUInstallDirs)
+include(CMakePackageConfigHelpers)
 
-## Set a reasonable default build type when not specified by the user
-if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
-    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
-endif()
-
-# Cross-platform compiler detection
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    set(COMPILER_IS_GCC_LIKE TRUE)
-elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
-    set(COMPILER_IS_MSVC TRUE)
-endif()
-
-# Options
+# --- Options ---
 option(HUMBLEENGINE_BUILD_SHARED "Build as shared library" OFF)
 option(HUMBLEENGINE_BUILD_EXAMPLES "Build example executables" OFF)
 option(HUMBLEENGINE_BUILD_TESTS "Build and run tests" OFF)
 option(HUMBLEENGINE_ENABLE_LTO "Enable Link Time Optimization" ON)
 option(HUMBLEENGINE_ENABLE_SANITIZERS "Enable sanitizers (Debug only)" OFF)
+set(HUMBLEENGINE_SANITIZERS "" CACHE STRING "List of sanitizers (address,undefined,thread,memory)")
 
-# Platform-specific backend configuration
-if(WIN32)
-    # Windows: DirectX/OpenGL backends available
-    set(PLATFORM_DEFINES PLATFORM_DESKTOP GRAPHICS_API_OPENGL_33)
-elseif(APPLE)
-    # macOS: Metal/OpenGL backends
-    set(PLATFORM_DEFINES PLATFORM_DESKTOP GRAPHICS_API_OPENGL_33)
-    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
-        set(PLATFORM_DEFINES PLATFORM_IOS GRAPHICS_API_OPENGL_ES2)
-    endif()
-elseif(UNIX)
-    # Linux: OpenGL/Vulkan backends
-    set(PLATFORM_DEFINES PLATFORM_DESKTOP GRAPHICS_API_OPENGL_33)
-    if(ANDROID)
-        set(PLATFORM_DEFINES PLATFORM_ANDROID GRAPHICS_API_OPENGL_ES2)
-    endif()
-endif()
-
+# --- Sources ---
 set(ENGINE_SOURCES
         src/rendering/renderer.cpp
         src/logging/logger.cpp
-    src/core/engine_core.cpp
+        src/core/engine_core.cpp
         src/game/game.cpp
 )
 
-file(GLOB_RECURSE ENGINE_HEADERS CONFIGURE_DEPENDS "include/*.h")
-
+# --- Library target ---
 if(HUMBLEENGINE_BUILD_SHARED)
     add_library(${PROJECT_NAME} SHARED ${ENGINE_SOURCES})
     target_compile_definitions(${PROJECT_NAME} PRIVATE HUMBLEENGINE_BUILD_SHARED)
@@ -64,112 +38,101 @@ endif()
 
 add_library(HumbleEngine::HumbleEngine ALIAS ${PROJECT_NAME})
 
-target_include_directories(${PROJECT_NAME}
+# --- Single-header public API ---
+target_sources(${PROJECT_NAME}
         PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>
-        PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        FILE_SET HEADERS
+        BASE_DIRS include
+        FILES include/humble_engine.h
 )
 
-find_package(raylib CONFIG REQUIRED)
-# Some distributions (Conan/system) expose either 'raylib' or 'raylib::raylib'.
-# Provide an alias if only the namespaced target exists.
-if(NOT TARGET raylib AND TARGET raylib::raylib)
-    add_library(raylib ALIAS raylib::raylib)
-endif()
+target_include_directories(${PROJECT_NAME}
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# --- Language standard ---
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
+
+# --- Dependencies ---
+find_package(raylib REQUIRED)
 target_link_libraries(${PROJECT_NAME} PUBLIC raylib)
 
-# Export the platform defines as preprocessor symbols (e.g. -DPLATFORM_DESKTOP)
-if(PLATFORM_DEFINES)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE ${PLATFORM_DEFINES})
-endif()
-
-if(COMPILER_IS_GCC_LIKE)
+# --- Compiler warnings (local only, not exported) ---
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     target_compile_options(${PROJECT_NAME} PRIVATE
             -Wall -Wextra -Wpedantic -Wshadow -Wconversion
             -Wunreachable-code -Wuninitialized
             $<$<CONFIG:Debug>:-g3 -O0 -fno-omit-frame-pointer>
             $<$<CONFIG:Release>:-O3 -DNDEBUG>
     )
-
-    # Sanitizers (Debug only)
-    if(HUMBLEENGINE_ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
-        target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined)
-        target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address,undefined)
-    endif()
-
-elseif(COMPILER_IS_MSVC)
+elseif(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE
             /W4 /permissive- /utf-8
             $<$<CONFIG:Debug>:/Od /Zi>
             $<$<CONFIG:Release>:/O2 /DNDEBUG>
+            /MP
     )
-
-    # Enable parallel compilation
-    target_compile_options(${PROJECT_NAME} PRIVATE /MP)
 endif()
 
-# Link Time Optimization (Release only)
+# --- Sanitizers (Debug only) ---
+if(HUMBLEENGINE_ENABLE_SANITIZERS AND CMAKE_BUILD_TYPE STREQUAL "Debug")
+    foreach(sanitizer IN LISTS HUMBLEENGINE_SANITIZERS)
+        target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=${sanitizer})
+        target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=${sanitizer})
+    endforeach()
+endif()
+
+# --- Link Time Optimization ---
 if(HUMBLEENGINE_ENABLE_LTO)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-            INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE
-            INTERPROCEDURAL_OPTIMIZATION_RELWITHDEBINFO TRUE
-    )
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT ipo_supported OUTPUT error)
+    if(ipo_supported)
+        set_property(TARGET ${PROJECT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+    endif()
 endif()
 
-# Examples
-if(HUMBLEENGINE_BUILD_EXAMPLES AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt")
-    add_subdirectory(examples)
-endif()
-
-# Installation (for package managers)
-include(GNUInstallDirs)
-
+# --- Install / Export ---
 install(TARGETS ${PROJECT_NAME}
         EXPORT HumbleEngineTargets
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        FILE_SET HEADERS
 )
 
-install(FILES ${ENGINE_HEADERS}
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/humble_engine
-)
-
-# Package configuration
 install(EXPORT HumbleEngineTargets
         FILE HumbleEngineTargets.cmake
         NAMESPACE HumbleEngine::
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/HumbleEngine
 )
 
-# Generate and install package config file
-include(CMakePackageConfigHelpers)
 configure_package_config_file(
-    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/HumbleEngineConfig.cmake.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfig.cmake"
-    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/HumbleEngine
+        "${CMAKE_CURRENT_SOURCE_DIR}/cmake/HumbleEngineConfig.cmake.in"
+        "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfig.cmake"
+        INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/HumbleEngine
 )
 
 write_basic_package_version_file(
-    "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfigVersion.cmake"
-    VERSION ${PROJECT_VERSION}
-    COMPATIBILITY SameMajorVersion
+        "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfigVersion.cmake"
+        VERSION ${PROJECT_VERSION}
+        COMPATIBILITY SameMajorVersion
 )
 
 install(FILES
-    "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfig.cmake"
-    "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfigVersion.cmake"
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/HumbleEngine
+        "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfig.cmake"
+        "${CMAKE_CURRENT_BINARY_DIR}/HumbleEngineConfigVersion.cmake"
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/HumbleEngine
 )
 
-
+# --- Examples ---
+if(HUMBLEENGINE_BUILD_EXAMPLES AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/examples/CMakeLists.txt")
+    add_subdirectory(examples)
+endif()
 
 # --- Tests ---
-include(cmake/tests.cmake)
+if(HUMBLEENGINE_BUILD_TESTS AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/tests.cmake")
+    include(cmake/tests.cmake)
+endif()
 
-if(PROJECT_IS_TOP_LEVEL)
+# --- Top-level executable (only if this is root project) ---
+if(CMAKE_SOURCE_DIR STREQUAL PROJECT_SOURCE_DIR)
     add_executable(humble_engine main.cpp)
     target_link_libraries(humble_engine PRIVATE ${PROJECT_NAME})
 endif()

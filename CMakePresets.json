@@ -1,16 +1,12 @@
 {
   "version": 3,
-  "cmakeMinimumRequired": {
-    "major": 3,
-    "minor": 20
-  },
+  "cmakeMinimumRequired": { "major": 3, "minor": 20 },
   "configurePresets": [
     {
-      "name": "release",
-      "displayName": "Release",
-      "generator": "Ninja",
+      "name": "default",
+      "generator": "Ninja", 
       "binaryDir": "${sourceDir}/build/Release",
-      "toolchainFile": "${sourceDir}/build/Release/build/Release/conan_toolchain.cmake",
+      "toolchainFile": "${sourceDir}/build/Release/generators/conan_toolchain.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
@@ -18,63 +14,24 @@
     },
     {
       "name": "debug",
-      "displayName": "Debug",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/Debug",
-      "toolchainFile": "${sourceDir}/build/Debug/build/Debug/conan_toolchain.cmake",
+      "binaryDir": "${sourceDir}/build/Debug", 
+      "toolchainFile": "${sourceDir}/build/Debug/generators/conan_toolchain.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
         "HUMBLEENGINE_ENABLE_SANITIZERS": "ON"
       }
-    },
-    {
-      "name": "debug-with-tests",
-      "displayName": "Debug With Tests",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/Debug",
-      "toolchainFile": "${sourceDir}/build/Debug/build/Debug/conan_toolchain.cmake",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Debug",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "HUMBLEENGINE_BUILD_TESTS": "ON"
-      }
-    },
-    {
-      "name": "release-with-tests",
-      "displayName": "Release With Tests",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/Release",
-      "toolchainFile": "${sourceDir}/build/Release/build/Release/conan_toolchain.cmake",
-      "cacheVariables": {
-        "CMAKE_BUILD_TYPE": "Release",
-        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-        "HUMBLEENGINE_BUILD_TESTS": "ON"
-      }
     }
   ],
   "buildPresets": [
     {
-      "name": "release",
-      "configurePreset": "release"
+      "name": "default",
+      "configurePreset": "default"
     },
     {
-      "name": "debug",
+      "name": "debug", 
       "configurePreset": "debug"
-    }
-  ],
-  "testPresets": [
-    {
-      "name": "release",
-      "configurePreset": "release",
-      "output": { "outputOnFailure": true }
-    },
-    {
-      "name": "debug",
-      "configurePreset": "debug",
-      "output": {
-        "outputOnFailure": true
-      }
     }
   ]
 }

@@ -1,20 +1,41 @@
 # tests.cmake - Modular test integration for HumbleEngine
 
-# Only include tests if explicitly requested
 if(HUMBLEENGINE_BUILD_TESTS)
     include(CTest)
     enable_testing()
-    find_package(Catch2 CONFIG QUIET)
-    if(TARGET Catch2::Catch2WithMain AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_engine.cpp")
-        add_executable(tests_engine tests/test_engine.cpp)
-        target_link_libraries(tests_engine PRIVATE Catch2::Catch2WithMain ${PROJECT_NAME})
-        target_compile_features(tests_engine PRIVATE cxx_std_23)
-        add_test(NAME engine_tests COMMAND tests_engine)
-        if(TARGET Catch2::Catch2)
-            include(Catch)
-            catch_discover_tests(tests_engine)
-        endif()
+
+    # Find Catch2 - should be available via Conan
+    find_package(Catch2 3 REQUIRED)
+
+    # Collect all test files
+    file(GLOB_RECURSE TEST_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/tests/*.cpp")
+    
+    if(TEST_SOURCES)
+        add_executable(humble_engine_tests ${TEST_SOURCES})
+        
+        target_link_libraries(humble_engine_tests 
+            PRIVATE 
+            Catch2::Catch2WithMain
+            ${PROJECT_NAME}
+        )
+        
+        target_compile_features(humble_engine_tests PRIVATE cxx_std_23)
+        
+        # Include directories for tests
+        target_include_directories(humble_engine_tests 
+            PRIVATE 
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+            ${CMAKE_CURRENT_SOURCE_DIR}/src
+        )
+
+        # Discover and register tests with CTest
+        include(Catch)
+        catch_discover_tests(humble_engine_tests
+            TEST_PREFIX "HumbleEngine::"
+        )
+
+        message(STATUS "Added ${CMAKE_MATCH_COUNT} test files to humble_engine_tests")
     else()
-        message(STATUS "Catch2 target missing – skipping tests.")
+        message(WARNING "No test files found in tests/ directory")
     endif()
 endif()
