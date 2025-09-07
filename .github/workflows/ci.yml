@@ -97,8 +97,12 @@ jobs:
           build_type=${{ matrix.build_type }}
           EOF
           
-          if [ "${{ runner.os }}" != "Windows" ]; then
-            echo "compiler.libcxx=${{ runner.os == 'macOS' && 'libc++' || 'libstdc++11' }}" >> ci_profile
+          if [ "${{ runner.os }}" == "Windows" ]; then
+            echo "compiler.runtime=dynamic" >> ci_profile
+          elif [ "${{ runner.os }}" == "macOS" ]; then
+            echo "compiler.libcxx=libc++" >> ci_profile
+          else
+            echo "compiler.libcxx=libstdc++11" >> ci_profile
           fi
 
       - name: Install dependencies via Conan
