@@ -84,19 +84,29 @@ jobs:
           python -m pip install --upgrade pip
           pip install "conan>=2.0,<3.0"
 
-      - name: Detect Conan profile
-        run: conan profile detect --force
-
-      - name: Show Conan profile
-        run: conan profile show
+      - name: Create Conan profile
+        shell: bash
+        run: |
+          cat > ci_profile << 'EOF'
+          [settings]
+          os=${{ runner.os == 'Linux' && 'Linux' || runner.os == 'macOS' && 'Macos' || 'Windows' }}
+          arch=${{ runner.os == 'macOS' && 'armv8' || 'x86_64' }}
+          compiler=${{ runner.os == 'Linux' && 'gcc' || runner.os == 'macOS' && 'apple-clang' || 'msvc' }}
+          compiler.version=${{ runner.os == 'Linux' && '13' || runner.os == 'macOS' && '15' || '193' }}
+          compiler.cppstd=23
+          build_type=${{ matrix.build_type }}
+          EOF
+          
+          if [ "${{ runner.os }}" != "Windows" ]; then
+            echo "compiler.libcxx=${{ runner.os == 'macOS' && 'libc++' || 'libstdc++11' }}" >> ci_profile
+          fi
 
       - name: Install dependencies via Conan
         shell: bash
         run: |
           conan install . \
+            --profile ci_profile \
             --build=missing \
-            -s:h build_type=${{ matrix.build_type }} \
-            -s:h compiler.cppstd=23 \
             -o build_tests=True \
             --conf="tools.cmake.cmaketoolchain:generator=Ninja" \
             --conf="tools.system.package_manager:mode=install" \
