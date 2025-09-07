@@ -80,13 +80,14 @@ jobs:
           os=${{ runner.os == 'Linux' && 'Linux' || runner.os == 'macOS' && 'Macos' || 'Windows' }}
           arch=${{ runner.os == 'macOS' && 'armv8' || 'x86_64' }}
           compiler=${{ runner.os == 'Linux' && 'gcc' || runner.os == 'macOS' && 'apple-clang' || 'msvc' }}
-          compiler.version=${{ runner.os == 'Linux' && '13' || runner.os == 'macOS' && '15' || '193' }}
+          compiler.version=${{ runner.os == 'Linux' && '13' || runner.os == 'macOS' && '15' || '194' }}
           compiler.cppstd=23
           build_type=${{ matrix.build_type }}
           EOF
           
           if [ "${{ runner.os }}" == "Windows" ]; then
             echo "compiler.runtime=dynamic" >> ci_profile
+            echo "compiler.runtime_type=${{ matrix.build_type }}" >> ci_profile
           elif [ "${{ runner.os }}" == "macOS" ]; then
             echo "compiler.libcxx=libc++" >> ci_profile
           else
