@@ -107,7 +107,7 @@ jobs:
           conan install . \
             --profile ci_profile \
             --build=missing \
-            -o build_tests=True \
+            -o "&:build_tests=True" \
             --conf="tools.cmake.cmaketoolchain:generator=Ninja" \
             --conf="tools.system.package_manager:mode=install" \
             --conf="tools.system.package_manager:sudo=True"
