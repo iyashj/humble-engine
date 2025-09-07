@@ -26,7 +26,7 @@ TEST_CASE("Logger functionality", "[engine][logging]")
     }
 }
 
-TEST_CASE("Renderer basic functionality", "[engine][rendering]")
+TEST_CASE("Renderer basic functionality", "[engine][rendering][gui]")
 {
     SECTION("Renderer creation and basic operations") {
         engine::Renderer renderer;

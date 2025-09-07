@@ -30,8 +30,17 @@ if(HUMBLEENGINE_BUILD_TESTS)
 
         # Discover and register tests with CTest
         include(Catch)
+
+        # In CI, skip GUI-dependent tests that require a window/display
+        if(DEFINED ENV{CI})
+            set(_CATCH_SPEC "~[gui]")
+        else()
+            set(_CATCH_SPEC "")
+        endif()
+
         catch_discover_tests(humble_engine_tests
             TEST_PREFIX "HumbleEngine::"
+            TEST_SPEC "${_CATCH_SPEC}"
         )
 
         message(STATUS "Added ${CMAKE_MATCH_COUNT} test files to humble_engine_tests")
