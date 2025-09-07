@@ -2,9 +2,9 @@ name: Build and Test
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, ver1 ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, ver1 ]
   workflow_dispatch:
 
 concurrency:
