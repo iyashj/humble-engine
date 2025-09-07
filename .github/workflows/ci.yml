@@ -26,18 +26,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Free disk space (Linux)
-        if: runner.os == 'Linux' && inputs.free_disk_space
-        uses: jlumbroso/free-disk-space@main
-        with:
-          tool-cache: false
-          android: true
-          dotnet: true
-          haskell: true
-          large-packages: true
-          docker-images: true
-          swap-storage: false
-
       - name: Install GCC-13 and dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
