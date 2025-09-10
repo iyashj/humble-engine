@@ -22,7 +22,7 @@ namespace engine {
         // Called once at shutdown
         virtual void onShutdown() {}
 
-        [[nodiscard]] IRenderer& getRenderer() const { return renderer; }
+        [[nodiscard]] constexpr IRenderer& getRenderer() const { return renderer; }
 
     private:
         IRenderer& renderer;
