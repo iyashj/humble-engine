@@ -11,7 +11,7 @@ namespace engine {
 			static_cast<float>(windowWidth) / 2.0f,
 			static_cast<float>(windowHeight) / 2.0f};
 		InitWindow(windowWidth, windowHeight, title.c_str());
-		SetTargetFPS(60);
+		
 		try {
 			renderTexture = std::make_unique<RenderTexture2D>(LoadRenderTexture(windowWidth, windowHeight));
 		} catch (const std::exception& e) {
