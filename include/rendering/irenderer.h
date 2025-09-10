@@ -1,6 +1,7 @@
 #ifndef IRENDERER_H
 #define IRENDERER_H
 #include <string>
+#include <expected>
 #include <raylib.h>
 
 namespace engine {
