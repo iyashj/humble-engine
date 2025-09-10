@@ -72,6 +72,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install "conan>=2.0,<3.0"
 
+      - name: Enable ccache (Linux/macOS)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          echo "CMAKE_C_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+          echo "CMAKE_CXX_COMPILER_LAUNCHER=ccache" >> $GITHUB_ENV
+
       - name: Create Conan profile
         shell: bash
         run: |
@@ -109,7 +116,11 @@ jobs:
         shell: bash
         run: |
           PRESET=${{ matrix.build_type == 'Debug' && 'debug' || 'default' }}
-          cmake --preset $PRESET -D HUMBLEENGINE_ENABLE_SANITIZERS=OFF
+          EXTRA_FLAGS=""
+          if [[ -n "${CMAKE_C_COMPILER_LAUNCHER}" && -n "${CMAKE_CXX_COMPILER_LAUNCHER}" ]]; then
+            EXTRA_FLAGS+=" -DCMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER} -DCMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}"
+          fi
+          cmake --preset $PRESET -D HUMBLEENGINE_ENABLE_SANITIZERS=OFF ${EXTRA_FLAGS}
         if: runner.os != 'Windows'
 
       - name: Configure CMake (Windows)
@@ -143,6 +154,11 @@ jobs:
         run: |
           ctest --test-dir build/${{ matrix.build_type }} --output-on-failure --parallel
         if: runner.os == 'Windows'
+
+      - name: ccache stats (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          which ccache && ccache -s || true
 
       - name: Upload test results
         if: always()
