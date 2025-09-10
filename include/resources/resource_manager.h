@@ -2,6 +2,7 @@
 #define HUMBLEENGINE_RESOURCE_MANAGER_H
 #include <expected>
 #include <fmt/format.h>
+#include <format>
 #include <raylib.h>
 #include <shared_mutex>
 #include <string>
