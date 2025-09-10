@@ -29,8 +29,12 @@ namespace engine {
 
 	void Renderer::beginFrame() {
 		BeginDrawing();
+		// Clear default framebuffer each frame
+		ClearBackground(BLACK);
 		if (renderTexture) {
 			BeginTextureMode(*renderTexture);
+			// Clear offscreen target as well
+			ClearBackground(BLANK);
 		}
 	}
 
@@ -56,7 +60,12 @@ namespace engine {
 
 		drawQueue.clear();
 		if (renderTexture) {
+			// Finish offscreen render and draw it to backbuffer (flip Y)
 			EndTextureMode();
+			Rectangle src{0.0f, 0.0f, static_cast<float>(windowWidth), -static_cast<float>(windowHeight)};
+			Rectangle dst{0.0f, 0.0f, static_cast<float>(windowWidth), static_cast<float>(windowHeight)};
+			Vector2 origin{0.0f, 0.0f};
+			DrawTexturePro(renderTexture->texture, src, dst, origin, 0.0f, WHITE);
 		}
 		EndDrawing();
 	}
