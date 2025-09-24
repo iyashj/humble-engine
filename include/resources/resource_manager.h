@@ -1,14 +1,72 @@
 #ifndef HUMBLEENGINE_RESOURCE_MANAGER_H
 #define HUMBLEENGINE_RESOURCE_MANAGER_H
 #include <expected>
+#include <filesystem>
 #include <fmt/format.h>
 #include <format>
+#include <iostream>
 #include <raylib.h>
 #include <shared_mutex>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+#if defined(_WIN32)
+    #include <windows.h>
+#elif defined(__APPLE__)
+    #include <mach-o/dyld.h>
+#elif defined(__linux__)
+    #include <unistd.h>
+#endif
 
 namespace engine::resources {
+
+    inline std::filesystem::path getExecutableDir()
+{
+    std::filesystem::path exePath;
+
+    #if defined(_WIN32)
+    char buffer[MAX_PATH];
+    DWORD len = GetModuleFileNameA(nullptr, buffer, MAX_PATH);
+    if (len > 0 && len < MAX_PATH) {
+        exePath = std::filesystem::path(buffer).parent_path();
+    }
+    #elif defined(__APPLE__)
+    char buffer[1024];
+    uint32_t size = sizeof(buffer);
+    if (_NSGetExecutablePath(buffer, &size) == 0) {
+        exePath = std::filesystem::path(buffer).parent_path();
+    }
+    #elif defined(__linux__)
+    char buffer[1024];
+    ssize_t len = readlink("/proc/self/exe", buffer, sizeof(buffer) - 1);
+    if (len != -1) {
+        buffer[len] = '\0';
+        exePath = std::filesystem::path(buffer).parent_path();
+    }
+    #endif
+
+    return exePath;
+}
+
+    inline std::filesystem::path& resourceRoot() {
+        static std::filesystem::path root;
+        return root;
+    }
+
+    inline void setResourceRoot(std::filesystem::path root) {
+        std::cout << "Setting resource root to %s" << root.c_str() << '\n';
+        resourceRoot() = std::move(root);
+    }
+
+    inline std::filesystem::path resolve(const std::string& relative) {
+        auto abs = resourceRoot() / relative;
+        if (!std::filesystem::exists(abs)) {
+            throw std::runtime_error("Resource not found: " + abs.string());
+        }
+        return abs;
+    }
+
     template <typename T>
     concept Resource = requires
     {
@@ -60,9 +118,10 @@ namespace engine::resources {
         using handle_type = Texture2D;
 
         static std::expected<handle_type, std::string> load(const std::string &path) {
-            Texture2D texture = LoadTexture(path.c_str());
+            const std::string resolvedPath = resolve(path);
+            Texture2D texture = LoadTexture(resolvedPath.c_str());
             if (texture.id == 0) {
-                return std::unexpected(fmt::format("Failed to load texture: {}", path));
+                return std::unexpected(fmt::format("Failed to load texture: {} (resolved to: {})", path, resolvedPath));
             }
             return texture;
         }
@@ -76,9 +135,10 @@ namespace engine::resources {
         using handle_type = Sound;
 
         static std::expected<handle_type, std::string> load(const std::string &path) {
-            Sound sound = LoadSound(path.c_str());
+            const std::string resolvedPath = resolve(path);
+            Sound sound = LoadSound(resolvedPath.c_str());
             if (sound.stream.buffer == nullptr) {
-                return std::unexpected(fmt::format("Failed to load sound: {}", path));
+                return std::unexpected(fmt::format("Failed to load sound: {} (tried: {})", path, resolvedPath));
             }
 
             return sound;
