@@ -12,15 +12,12 @@
 namespace engine {
 
     void Logger::initialize(const std::string &logFile, int level) {
-        // Print current working directory for debugging
-        std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
-
         std::string logFileName = logFile;
         if (!logFile.empty()) {
             // Add date-time tag to filename before extension
-            auto now = std::chrono::system_clock::now();
+            const auto now = std::chrono::system_clock::now();
             auto now_time_t = std::chrono::system_clock::to_time_t(now);
-            std::tm tm_buf;
+            std::tm tm_buf{};
 #if defined(_WIN32)
             localtime_s(&tm_buf, &now_time_t);
 #else
@@ -29,8 +26,7 @@ namespace engine {
             std::ostringstream oss;
             oss << std::put_time(&tm_buf, "%Y%m%d_%H%M%S");
             // Insert timestamp before file extension
-            size_t dot = logFile.find_last_of('.');
-            if (dot != std::string::npos) {
+            if (const size_t dot = logFile.find_last_of('.'); dot != std::string::npos) {
                 logFileName = logFile.substr(0, dot) + "_" + oss.str() + logFile.substr(dot);
             } else {
                 logFileName = logFile + "_" + oss.str();
@@ -57,7 +53,7 @@ namespace engine {
         // Get timestamp
         auto now = std::chrono::system_clock::now();
         auto now_time_t = std::chrono::system_clock::to_time_t(now);
-        std::tm tm_buf;
+        std::tm tm_buf{};
 #if defined(_WIN32)
         localtime_s(&tm_buf, &now_time_t);
 #else
@@ -68,7 +64,7 @@ namespace engine {
 
     const std::string formatted = fmt::format("[{}] [{}] {}", timestamp.str(), getLevelString(logLevel), safeMsg);
         // Thread-safe output
-        std::lock_guard<std::mutex> lock(logMutex);
+        const std::lock_guard<std::mutex> lock(logMutex);
         std::cout << formatted << '\n';
         if (logFileStream.is_open()) {
             logFileStream << formatted << '\n';
